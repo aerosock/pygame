@@ -6,7 +6,7 @@ SCREEN_WIDTH = 800
 
 # pygame setup
 pygame.init()
-player_lives = 10
+player_lives = 1
 def monsteranim():
     global monster_index, monster_surf
     monster_index += 0.1    
@@ -14,10 +14,21 @@ def monsteranim():
         monster_index = 0
     monster_surf = monsterpics[int(monster_index)]
 
-    
+def resetgame():
+    global player_lives, player, monster_rect, game_state
+    player_lives = 1
+    player.topleft = (50, 100)
+    monster_rect.midbottom = (monster_x, monster_y)
+    game_state = "playing"
+
+game_state = "playing"
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+screen_rect = screen.get_rect()
 clock = pygame.time.Clock()
 running = True
+
+font = pygame.font.Font('PixelifySans-Regular.ttf', )
+
 player = pygame.Rect((50, 100, 50, 50))  # x, y, width, height
 player_speed = 5
 
@@ -38,45 +49,85 @@ monster_y = 300
 monster_speed = 5
 monster_rect = monster_surf.get_rect(midbottom = (monster_x, monster_y)) 
 # game loop
+restartbuth = 55
+restartbutw = 150
+restartbut = pygame.Rect((0, 0, restartbutw, restartbuth))
+restartbut.center = (screen_rect.centerx, screen_rect.centery + 50)
+restartbtncolor = (0, 255, 0)
+restartbtncolorhover = (0, 200, 0)
+restartbtntextcolor = (0, 0, 0)
+
+restartbtnfont = pygame.font.Font('PixelifySans-Regular.ttf', 30)
+restartbtntext = restartbtnfont.render('Restart', False, restartbtntextcolor)
+
+
+
 time = 0
 lasttime = 0
 while running:
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
             exit()
-
-    key = pygame.key.get_pressed()
-    if key[pygame.K_RIGHT]:
-        player.move_ip(player_speed, 0)
-    elif key[pygame.K_LEFT]:
-        player.move_ip(-player_speed, 0)
-    elif key[pygame.K_UP]:
-        player.move_ip(0, -player_speed)
-    elif key[pygame.K_DOWN]:
-        player.move_ip(0, player_speed)
-    # fill the screen with a color to wipe away anything from last frame
-    screen.fill("black")
-
-    monster_rect.right += monster_speed
-    monsteranim()
-    if monster_rect.left > SCREEN_WIDTH:
-        monster_speed = -monster_speed
-    if monster_rect.right < 0:
-        monster_speed = -monster_speed
-    # RENDER YOUR GAME HERE
-    screen.blit(monster_surf, monster_rect)
-    pygame.draw.rect(screen, (255, 0, 0), player)
-    # flip() the display to put your work on screen
-    time += clock.get_time()
-    if player.colliderect(monster_rect):
-            if time - lasttime > 2000:
-                lasttime = time
-                player_lives -= 1
-                print(player_lives)
+        if game_state == "gameover":
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if restartbut.collidepoint(event.pos):
+                    resetgame()
              
+        
+    key = pygame.key.get_pressed()
+    if game_state == "playing":
+        if key[pygame.K_RIGHT]:
+            player.move_ip(player_speed, 0)
+        elif key[pygame.K_LEFT]:
+            player.move_ip(-player_speed, 0)
+        elif key[pygame.K_UP]:
+            player.move_ip(0, -player_speed)
+        elif key[pygame.K_DOWN]:
+            player.move_ip(0, player_speed)
+        # fill the screen with a color to wipe away anything from last frame
+        screen.fill("black")
+        text_lives = font.render(f'Lives: {player_lives}', False, (255, 255, 255))
+        cornerlives = screen.blit(text_lives, (SCREEN_WIDTH - 150, 200))
+
+        monster_rect.right += monster_speed
+        monsteranim()
+        if monster_rect.left > SCREEN_WIDTH:
+            monster_speed = -monster_speed
+        if monster_rect.right < 0:
+            monster_speed = -monster_speed
+        # RENDER YOUR GAME HERE
+        screen.blit(monster_surf, monster_rect)
+        playerdraw = pygame.draw.rect(screen, (255, 0, 0), player)
+        # flip() the display to put your work on screen
+        time += clock.get_time()
+        if player.colliderect(monster_rect):
+                if time - lasttime > 2000:
+                    lasttime = time
+                    player_lives -= 1
+                    print(player_lives)
+
+        if player_lives <= 0:
+            game_state = "gameover"
+
+    elif game_state == "gameover":
+        mousepos = pygame.mouse.get_pos()
+        
+        screen.fill("white")
+        gameovertext = font.render(f'u\'ve died bro)', False, "black")
+        gameovertextrect = gameovertext.get_rect(center = (SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+        gameover = screen.blit(gameovertext, gameovertextrect)
+        restartbut = pygame.draw.rect(screen, restartbtncolor, restartbut)
+        if restartbut.collidepoint(mousepos):
+            restartbut = pygame.draw.rect(screen, restartbtncolorhover, restartbut)
+            
+        else:
+            restartbut = pygame.draw.rect(screen, restartbtncolor, restartbut)
+
+        screen.blit(restartbtntext, restartbtntext.get_rect(topleft = (restartbut.centerx - restartbtntext.get_width()/2, restartbut.centery - restartbtntext.get_height()/2)))
 
     pygame.display.update()
 
