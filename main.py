@@ -4,9 +4,27 @@ from sys import exit
 SCREEN_HEIGHT = 600 #caps lock oznacuje konstanty
 SCREEN_WIDTH = 800
 
+player_x = 150
+player_y = 150
+playerindex = 0
 # pygame setup
 pygame.init()
 player_lives = 1
+def imagecutter(sheet, x , y, sizex, sizey, scale):
+   img = pygame.Surface((sizex, sizey)).convert_alpha()
+   img.blit(sheet, (0, 0), ((x*sizex), (y*sizey), sizex, sizey))
+   img = pygame.transform.scale(img, (sizex * scale, sizey * scale))
+   img.set_colorkey((0, 0, 0))
+   return img
+
+def playeranim(direction):
+    global playerimg, playerindex
+    framecount = 3
+    if playerindex >= framecount:
+        playerindex = 0
+    playerimg = imagecutter(PLAYERSPRITESHEET, playerindex, direction, 64, 128, 1)
+
+# imagecutter(playerspritesheet, 1, 2, 16, 16, 1)
 def monsteranim():
     global monster_index, monster_surf
     monster_index += 0.1    
@@ -15,9 +33,9 @@ def monsteranim():
     monster_surf = monsterpics[int(monster_index)]
 
 def resetgame():
-    global player_lives, player, monster_rect, game_state
+    global player_lives, playerect, monster_rect, game_state
     player_lives = 1
-    player.topleft = (50, 100)
+    playerect.midbottom = (player_x, player_y)
     monster_rect.midbottom = (monster_x, monster_y)
     game_state = "playing"
 
@@ -28,8 +46,9 @@ clock = pygame.time.Clock()
 running = True
 
 font = pygame.font.Font('PixelifySans-Regular.ttf', )
-
-player = pygame.Rect((50, 100, 50, 50))  # x, y, width, height
+PLAYERSPRITESHEET = pygame.image.load('64X128_Runing_Free.png').convert_alpha()
+playerimg = imagecutter(PLAYERSPRITESHEET, 0, 0, 64, 128, 1)
+playerect = playerimg.get_rect(midbottom = (player_x, player_y))
 player_speed = 5
 
 
@@ -81,13 +100,17 @@ while running:
     key = pygame.key.get_pressed()
     if game_state == "playing":
         if key[pygame.K_RIGHT]:
-            player.move_ip(player_speed, 0)
+            playeranim(2)
+            playerect.move_ip(player_speed, 0)
         elif key[pygame.K_LEFT]:
-            player.move_ip(-player_speed, 0)
+            playeranim(1)
+            playerect.move_ip(-player_speed, 0)
         elif key[pygame.K_UP]:
-            player.move_ip(0, -player_speed)
+            playeranim(3)
+            playerect.move_ip(0, -player_speed)
         elif key[pygame.K_DOWN]:
-            player.move_ip(0, player_speed)
+            playeranim(0)
+            playerect.move_ip(0, player_speed)
         # fill the screen with a color to wipe away anything from last frame
         screen.fill("black")
         text_lives = font.render(f'Lives: {player_lives}', False, (255, 255, 255))
@@ -101,10 +124,11 @@ while running:
             monster_speed = -monster_speed
         # RENDER YOUR GAME HERE
         screen.blit(monster_surf, monster_rect)
-        playerdraw = pygame.draw.rect(screen, (255, 0, 0), player)
+        playerdraw = screen.blit(playerimg, playerect)
+        # playerdraw = pygame.draw.rect(screen, (255, 0, 0), playerect)
         # flip() the display to put your work on screen
         time += clock.get_time()
-        if player.colliderect(monster_rect):
+        if playerect.colliderect(monster_rect):
                 if time - lasttime > 2000:
                     lasttime = time
                     player_lives -= 1
